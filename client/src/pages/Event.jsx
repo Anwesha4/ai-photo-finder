@@ -222,7 +222,10 @@ const Event = () => {
                 >
 
                   <img
-                    src={photo.url}
+                    src={photo.url.replace(
+                      "http://localhost:5000",
+                      "http://10.149.31.174:5000"
+                    )}
                     alt={`Event photo ${index + 1}`}
                     className="w-full h-auto object-contain"
                   />
