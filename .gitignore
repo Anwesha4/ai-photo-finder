@@ -1,0 +1,39 @@
+# Node
+node_modules/
+npm-debug.log*
+
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Uploaded photos
+server/uploads/
+
+# Python temporary files
+ai-service/temp_selfie.jpg
+
+# Build files
+dist/
+build/
+
+# Vite
+client/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+ai-service/me.jpeg
+ai-service/me4.jpeg
+ai-service/other.jpg
