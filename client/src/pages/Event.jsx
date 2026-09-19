@@ -218,9 +218,8 @@ const Event = () => {
 
                 <div
                   key={index}
-                  className="bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center"
+                  className="bg-gray-900 rounded-xl overflow-hidden"
                 >
-
                   <img
                     src={photo.url.replace(
                       "http://localhost:5000",
@@ -230,6 +229,14 @@ const Event = () => {
                     className="w-full h-auto object-contain"
                   />
 
+                  <div className="p-3">
+                    <a
+                      href={`http://10.149.31.174:5000/api/events/${id}/photos/${photo.filename}/download`}
+                      className="block w-full text-center px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold"
+                    >
+                      ⬇ Download Photo
+                    </a>
+                  </div>
                 </div>
 
               ))}
