@@ -1,7 +1,24 @@
+import "dotenv/config";
 import Event from "../models/Event.js";
 import path from "path";
 import fs from "fs";
 import axios from "axios";
+
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+const S3_BUCKET = process.env.AWS_S3_BUCKET;
 
 export const createEvent = async (req, res) => {
   try {
@@ -83,11 +100,43 @@ export const uploadPhotos = async (req, res) => {
       // Add photo to event first
       event.photos.push(photo);
 
-      // Get the actual uploaded photo path
+      // Get actual uploaded photo path
       const imagePath = path.resolve(file.path);
 
+      /*
+       * Upload photo to Amazon S3
+       */
       try {
-        // Ask Flask / InsightFace to process the photo
+        const fileBuffer = await fs.promises.readFile(file.path);
+
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: S3_BUCKET,
+            Key: `events/${req.params.id}/${file.filename}`,
+            Body: fileBuffer,
+            ContentType: file.mimetype,
+          })
+        );
+
+        console.log(
+          `Uploaded ${file.filename} to S3 successfully`
+        );
+      } catch (s3Error) {
+        console.error(
+          `S3 upload failed for ${file.filename}:`,
+          s3Error.message
+        );
+
+        /*
+         * We continue because the local upload
+         * and AI processing should still work.
+         */
+      }
+
+      /*
+       * Ask Flask / InsightFace to process the photo
+       */
+      try {
         const aiResponse = await axios.post(
           "http://127.0.0.1:8000/process-photo",
           {
@@ -178,6 +227,7 @@ export const updatePhotoFaces = async (req, res) => {
       filename,
       faceCount: faces.length,
     });
+
   } catch (error) {
     console.error("UPDATE FACE ERROR:", error);
 
@@ -223,6 +273,7 @@ export const getEventFaceData = async (req, res) => {
       eventId,
       faces: faceData,
     });
+
   } catch (error) {
     console.error("GET FACE DATA ERROR:", error);
 
@@ -281,7 +332,6 @@ export const findPhotos = async (req, res) => {
   }
 };
 
-
 export const deletePhoto = async (req, res) => {
   try {
     const { id, filename } = req.params;
@@ -317,6 +367,9 @@ export const deletePhoto = async (req, res) => {
       });
     }
 
+    /*
+     * Delete from local uploads folder
+     */
     const filePath = path.resolve(
       "uploads",
       filename
@@ -328,6 +381,28 @@ export const deletePhoto = async (req, res) => {
       console.error(
         "FILE DELETE ERROR:",
         fileError.message
+      );
+    }
+
+    /*
+     * Delete from S3
+     */
+    try {
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: S3_BUCKET,
+          Key: `events/${id}/${filename}`,
+        })
+      );
+
+      console.log(
+        `Deleted ${filename} from S3 successfully`
+      );
+
+    } catch (s3Error) {
+      console.error(
+        `S3 delete failed for ${filename}:`,
+        s3Error.message
       );
     }
 
