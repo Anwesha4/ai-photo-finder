@@ -44,6 +44,10 @@ const eventSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    deletePin: {
+      type: String,
+      required: true,
+    },
 
     photos: {
       type: [photoSchema],

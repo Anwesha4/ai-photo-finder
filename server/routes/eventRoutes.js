@@ -7,8 +7,11 @@ import {
   uploadPhotos,
   updatePhotoFaces,
   getEventFaceData,
-  findPhotos
+  findPhotos,
+  deletePhoto
 } from "../controllers/eventController.js";
+
+
 
 import upload, { uploadMemory } from "../middleware/upload.js";
 
@@ -33,6 +36,8 @@ router.get("/:id/photos/:filename/download", (req, res) => {
     }
   );
 });
+
+router.delete("/:id/photos/:filename", deletePhoto);
 
 router.get("/:id", getEventById);
 

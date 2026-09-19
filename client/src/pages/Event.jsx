@@ -15,6 +15,9 @@ const Event = () => {
   const isShared =
     new URLSearchParams(window.location.search).get("shared") === "true";
 
+  // Event URL used by the QR code
+  const eventUrl = `${window.location.origin}/event/${id}?shared=true`;
+
   const fetchEvent = async () => {
     try {
       const response = await axios.get(
@@ -33,6 +36,63 @@ const Event = () => {
     fetchEvent();
   }, [id]);
 
+  // -----------------------------
+  // QR DOWNLOAD
+  // -----------------------------
+  const downloadQR = () => {
+    const canvas = document.querySelector("#event-qr");
+
+    if (!canvas) {
+      alert("QR code not found");
+      return;
+    }
+
+    const link = document.createElement("a");
+
+    link.download = `${event.name}-QR.png`;
+    link.href = canvas.toDataURL("image/png");
+
+    link.click();
+  };
+
+  // -----------------------------
+  // COPY EVENT LINK
+  // -----------------------------
+  const copyEventLink = async () => {
+    try {
+      await navigator.clipboard.writeText(eventUrl);
+
+      alert("Event link copied!");
+    } catch (error) {
+      console.error("Copy error:", error);
+
+      alert("Could not copy the event link");
+    }
+  };
+
+  // -----------------------------
+  // SHARE EVENT
+  // -----------------------------
+  const shareEvent = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: event.name,
+          text: `Join ${event.name} on PhotoFinder`,
+          url: eventUrl,
+        });
+      } catch (error) {
+        // User cancelled the share dialog.
+        console.log("Share cancelled");
+      }
+    } else {
+      await copyEventLink();
+    }
+  };
+
+  // -----------------------------
+  // UPLOAD PHOTOS
+  // -----------------------------
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       alert("Please select photos");
@@ -60,12 +120,16 @@ const Event = () => {
       alert("Photos uploaded successfully!");
     } catch (error) {
       console.error("Upload error:", error);
+
       alert("Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
+  // -----------------------------
+  // LOADING
+  // -----------------------------
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
@@ -74,6 +138,9 @@ const Event = () => {
     );
   }
 
+  // -----------------------------
+  // EVENT NOT FOUND
+  // -----------------------------
   if (!event) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
@@ -87,7 +154,10 @@ const Event = () => {
 
       <div className="max-w-7xl mx-auto">
 
-        {/* Event Header */}
+        {/* -------------------------------- */}
+        {/* EVENT HEADER */}
+        {/* -------------------------------- */}
+
         <h1 className="text-4xl md:text-5xl font-bold">
           {event.name}
         </h1>
@@ -96,9 +166,14 @@ const Event = () => {
           {event.description}
         </p>
 
-        {/* Shared Event Message */}
+
+        {/* -------------------------------- */}
+        {/* SHARED EVENT MESSAGE */}
+        {/* -------------------------------- */}
+
         {isShared && (
           <div className="mt-6 p-5 bg-purple-900/20 border border-purple-800 rounded-xl">
+
             <p className="font-semibold">
               You are viewing a shared event.
             </p>
@@ -106,10 +181,15 @@ const Event = () => {
             <p className="text-gray-400 mt-1">
               Add your photos to this event or find the photos you're in.
             </p>
+
           </div>
         )}
 
-        {/* Actions */}
+
+        {/* -------------------------------- */}
+        {/* ACTIONS */}
+        {/* -------------------------------- */}
+
         <div className="flex flex-wrap gap-4 mt-8">
 
           <button
@@ -119,7 +199,9 @@ const Event = () => {
             🔍 Find My Photos
           </button>
 
+
           <label className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg cursor-pointer">
+
             📸 Upload Photos
 
             <input
@@ -131,7 +213,9 @@ const Event = () => {
                 setSelectedFiles(Array.from(e.target.files))
               }
             />
+
           </label>
+
 
           {selectedFiles.length > 0 && (
             <button
@@ -147,14 +231,22 @@ const Event = () => {
 
         </div>
 
-        {/* Selected files count */}
+
+        {/* -------------------------------- */}
+        {/* SELECTED FILE COUNT */}
+        {/* -------------------------------- */}
+
         {selectedFiles.length > 0 && (
           <p className="text-gray-400 mt-4">
             {selectedFiles.length} photos selected
           </p>
         )}
 
-        {/* QR Code - Creator Only */}
+
+        {/* -------------------------------- */}
+        {/* QR CODE - CREATOR ONLY */}
+        {/* -------------------------------- */}
+
         {!isShared && (
           <div className="mt-12 bg-gray-900 rounded-2xl p-8 flex flex-col items-center text-center">
 
@@ -167,21 +259,64 @@ const Event = () => {
               Anyone who scans it can add their photos to this event.
             </p>
 
+
+            {/* QR */}
             <div className="mt-6 bg-white p-4 rounded-2xl">
+
               <QRCodeCanvas
-                value={`http://10.149.31.174:5173/event/${id}?shared=true`}
+                id="event-qr"
+                value={eventUrl}
                 size={220}
+                includeMargin={true}
               />
+
             </div>
+
 
             <p className="text-sm text-gray-500 mt-4">
               Anyone with this QR code can contribute photos.
             </p>
 
+
+            {/* QR ACTIONS */}
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
+
+              {/* DOWNLOAD */}
+              <button
+                onClick={downloadQR}
+                className="px-5 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition"
+              >
+                ⬇ Download QR
+              </button>
+
+
+              {/* SHARE */}
+              <button
+                onClick={shareEvent}
+                className="px-5 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg font-semibold transition"
+              >
+                📤 Share Event
+              </button>
+
+
+              {/* COPY */}
+              <button
+                onClick={copyEventLink}
+                className="px-5 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg font-semibold transition"
+              >
+                🔗 Copy Link
+              </button>
+
+            </div>
+
           </div>
         )}
 
-        {/* Gallery */}
+
+        {/* -------------------------------- */}
+        {/* GALLERY */}
+        {/* -------------------------------- */}
+
         <div className="mt-12">
 
           <div className="flex items-center justify-between mb-6">
@@ -195,6 +330,7 @@ const Event = () => {
             </span>
 
           </div>
+
 
           {event.photos.length === 0 ? (
 
@@ -220,6 +356,9 @@ const Event = () => {
                   key={index}
                   className="bg-gray-900 rounded-xl overflow-hidden"
                 >
+
+                  {/* PHOTO */}
+
                   <img
                     src={photo.url.replace(
                       "http://localhost:5000",
@@ -229,14 +368,90 @@ const Event = () => {
                     className="w-full h-auto object-contain"
                   />
 
-                  <div className="p-3">
+
+                  {/* PHOTO ACTIONS */}
+
+                  <div className="p-3 space-y-2">
+
+                    {/* DOWNLOAD */}
+
                     <a
                       href={`http://10.149.31.174:5000/api/events/${id}/photos/${photo.filename}/download`}
                       className="block w-full text-center px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold"
                     >
                       ⬇ Download Photo
                     </a>
+
+
+                    {/* DELETE - CREATOR ONLY */}
+
+                    {!isShared && (
+                      <button
+                        onClick={async () => {
+
+                          const deletePin = prompt(
+                            "Enter the 4-digit creator PIN to delete this photo:"
+                          );
+
+                          if (!deletePin) {
+                            return;
+                          }
+
+
+                          if (!/^\d{4}$/.test(deletePin)) {
+                            alert("PIN must be exactly 4 digits");
+                            return;
+                          }
+
+
+                          const confirmed = window.confirm(
+                            "Are you sure you want to delete this photo?"
+                          );
+
+                          if (!confirmed) {
+                            return;
+                          }
+
+
+                          try {
+
+                            await axios.delete(
+                              `http://10.149.31.174:5000/api/events/${id}/photos/${photo.filename}`,
+                              {
+                                data: {
+                                  deletePin,
+                                },
+                              }
+                            );
+
+
+                            await fetchEvent();
+
+                            alert("Photo deleted successfully!");
+
+                          } catch (error) {
+
+                            console.error(
+                              "Delete error:",
+                              error
+                            );
+
+                            alert(
+                              error.response?.data?.message ||
+                              "Failed to delete photo"
+                            );
+
+                          }
+
+                        }}
+                        className="block w-full text-center px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold"
+                      >
+                        🗑 Delete Photo
+                      </button>
+                    )}
+
                   </div>
+
                 </div>
 
               ))}

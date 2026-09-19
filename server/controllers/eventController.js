@@ -1,25 +1,34 @@
 import Event from "../models/Event.js";
-import axios from "axios";
 import path from "path";
+import fs from "fs";
+import axios from "axios";
 
 export const createEvent = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, deletePin } = req.body;
 
-    if (!name) {
+    if (!name || !deletePin) {
       return res.status(400).json({
-        message: "Event name is required",
+        message: "Event name and delete PIN are required",
+      });
+    }
+
+    if (!/^\d{4}$/.test(deletePin)) {
+      return res.status(400).json({
+        message: "Delete PIN must be exactly 4 digits",
       });
     }
 
     const event = await Event.create({
       name,
       description,
+      deletePin,
+      photos: [],
     });
 
     res.status(201).json(event);
   } catch (error) {
-    console.error(error);
+    console.error("CREATE EVENT ERROR:", error);
 
     res.status(500).json({
       message: "Failed to create event",
@@ -268,6 +277,73 @@ export const findPhotos = async (req, res) => {
     res.status(500).json({
       message: "Failed to find photos",
       error: error.message,
+    });
+  }
+};
+
+
+export const deletePhoto = async (req, res) => {
+  try {
+    const { id, filename } = req.params;
+    const { deletePin } = req.body;
+
+    if (!deletePin) {
+      return res.status(400).json({
+        message: "Delete PIN is required",
+      });
+    }
+
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return res.status(404).json({
+        message: "Event not found",
+      });
+    }
+
+    if (event.deletePin !== deletePin) {
+      return res.status(403).json({
+        message: "Incorrect delete PIN",
+      });
+    }
+
+    const photoIndex = event.photos.findIndex(
+      (photo) => photo.filename === filename
+    );
+
+    if (photoIndex === -1) {
+      return res.status(404).json({
+        message: "Photo not found",
+      });
+    }
+
+    const filePath = path.resolve(
+      "uploads",
+      filename
+    );
+
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (fileError) {
+      console.error(
+        "FILE DELETE ERROR:",
+        fileError.message
+      );
+    }
+
+    event.photos.splice(photoIndex, 1);
+
+    await event.save();
+
+    res.status(200).json({
+      message: "Photo deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("DELETE PHOTO ERROR:", error);
+
+    res.status(500).json({
+      message: "Failed to delete photo",
     });
   }
 };
