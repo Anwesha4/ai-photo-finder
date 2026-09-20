@@ -37,7 +37,7 @@ const FindMe = () => {
       formData.append("eventId", id);
 
       const response = await fetch(
-        "http://10.149.31.174:5000/api/events/find-photos",
+        "/api/events/find-photos",
         {
           method: "POST",
           body: formData,

@@ -21,7 +21,7 @@ const Event = () => {
   const fetchEvent = async () => {
     try {
       const response = await axios.get(
-        `http://10.149.31.174:5000/api/events/${id}`
+        `/api/events/${id}`
       );
 
       setEvent(response.data);
@@ -109,7 +109,7 @@ const Event = () => {
       setUploading(true);
 
       await axios.post(
-        `http://10.149.31.174:5000/api/events/${id}/photos`,
+        `/api/events/${id}/photos`,
         formData
       );
 
@@ -360,10 +360,7 @@ const Event = () => {
                   {/* PHOTO */}
 
                   <img
-                    src={photo.url.replace(
-                      "http://localhost:5000",
-                      "http://10.149.31.174:5000"
-                    )}
+                    src={photo.url}
                     alt={`Event photo ${index + 1}`}
                     className="w-full h-auto object-contain"
                   />
@@ -376,7 +373,7 @@ const Event = () => {
                     {/* DOWNLOAD */}
 
                     <a
-                      href={`http://10.149.31.174:5000/api/events/${id}/photos/${photo.filename}/download`}
+                      href={`/api/events/${id}/photos/${photo.filename}/download`}
                       className="block w-full text-center px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold"
                     >
                       ⬇ Download Photo
@@ -416,7 +413,7 @@ const Event = () => {
                           try {
 
                             await axios.delete(
-                              `http://10.149.31.174:5000/api/events/${id}/photos/${photo.filename}`,
+                              `/api/events/${id}/photos/${photo.filename}`,
                               {
                                 data: {
                                   deletePin,

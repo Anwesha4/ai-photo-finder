@@ -92,7 +92,7 @@ export const uploadPhotos = async (req, res) => {
 
     for (const file of req.files) {
       const photo = {
-        url: `http://10.149.31.174:5000/uploads/${file.filename}`,
+        url: `/uploads/${file.filename}`,
         filename: file.filename,
         faces: [],
       };
@@ -259,10 +259,7 @@ export const getEventFaceData = async (req, res) => {
       for (const face of photo.faces) {
         faceData.push({
           filename: photo.filename,
-          url: photo.url.replace(
-            "http://localhost:5000",
-            "http://10.149.31.174:5000"
-          ),
+          url: photo.url,
           embedding: face.embedding,
           boundingBox: face.boundingBox,
         });

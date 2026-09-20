@@ -27,7 +27,7 @@ const CreateEvent = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://10.149.31.174:5000/api/events",
+        "/api/events",
         {
           name,
           description,
