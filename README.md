@@ -1,36 +1,37 @@
 # AI Photo Finder
 
-> Every photo you're in, without searching.
+**Every photo you're in, without searching.**
 
-AI Photo Finder is an AI-powered event photo discovery platform. An organizer creates an event and shares its QR code. Attendees can upload event photos or submit a selfie. The AI detects faces, generates face embeddings, compares the selfie against faces found in event photos, and returns matching photos.
+AI Photo Finder is an AI-powered event photo discovery platform that helps people find their pictures without manually browsing hundreds of event photos. Organizers can create event galleries, share them through QR codes, and manage their photos. Attendees can upload a selfie to discover event photos in which they appear.
 
-## Live Demo
-
-http://13.233.90.109/
+The application combines a React frontend, a Node.js backend, MongoDB, and a Python-based face recognition service powered by InsightFace.
 
 ## Features
 
-- Create events with a delete PIN
-- Generate and share an event QR code
-- Upload multiple event photos
-- AI face detection and face embeddings
-- Find photos containing an attendee from a selfie
-- View and download matching photos
-- Delete photos using the event PIN
-- Responsive desktop/mobile interface
-- AWS-based deployment and cloud photo storage
+- **Event Creation:** Create a dedicated gallery for an event with a four-digit delete PIN.
+- **Creator Login:** Return to an existing event gallery using the event name and its four-digit PIN, without recreating the event.
+- **QR Code Sharing:** Generate and share QR codes that link directly to event galleries.
+- **Bulk Photo Upload:** Upload multiple event photos to a gallery.
+- **AI Face Detection:** Detect faces in uploaded photos using InsightFace.
+- **Face Embeddings:** Generate numerical face representations for similarity matching.
+- **Find My Photos:** Upload a selfie to discover matching event photos.
+- **Photo Downloads:** View and download photos from an event gallery.
+- **Photo Deletion:** Allow the event creator to delete individual photos.
+- **Event Deletion:** Delete an entire event after PIN verification.
+- **Responsive Interface:** Access the application through a desktop or mobile browser.
 
 ## How It Works
 
-1. Organizer creates an event.
-2. The application generates a QR code for that event.
-3. Attendees scan the QR code and open the event.
-4. Event photos are uploaded and processed by the Python AI service.
-5. Faces are detected and their embeddings are stored with the photo metadata.
-6. An attendee uploads a selfie.
-7. The selfie is converted into a face embedding.
-8. The embedding is compared with stored event-face embeddings.
-9. Matching photos are displayed for the attendee to download.
+1. An organizer creates an event and sets a four-digit PIN.
+2. The application creates an event gallery and generates a shareable QR code.
+3. Attendees scan the QR code to open the gallery.
+4. The organizer uploads event photos.
+5. The backend stores event information and photo metadata, while the AI service detects faces and generates face embeddings.
+6. An attendee uploads a selfie through the **Find My Photos** feature.
+7. The AI service generates an embedding for the selfie.
+8. The application compares the selfie embedding against stored face data using similarity matching.
+9. Matching photos are returned to the attendee for viewing and downloading.
+10. The organizer can log in again using the event name and PIN to manage photos or delete the event.
 
 ## Architecture
 
@@ -38,22 +39,33 @@ http://13.233.90.109/
 Browser
    |
    v
-Nginx (AWS EC2)
+React + Vite Frontend
    |
-   +--> React/Vite production build
+   | HTTP / API Requests
+   v
+Node.js + Express Backend
    |
-   +--> Node.js/Express API
+   +--> MongoDB Atlas
+   |
+   +--> Local Photo Storage
+   |       |
+   |       +--> Uploaded Event Photos
+   |
+   +--> Python Flask AI Service
              |
-             +--> MongoDB Atlas
-             +--> Amazon S3
-             +--> Python AI Service
-                       |
-                       +--> InsightFace
+             +--> InsightFace
+             |
+             +--> Face Detection
+             |
+             +--> Face Embeddings
+             |
+             +--> Similarity Matching
 ```
 
 ## Tech Stack
 
 ### Frontend
+
 - React
 - Vite
 - React Router
@@ -62,174 +74,183 @@ Nginx (AWS EC2)
 - QRCode
 
 ### Backend
+
 - Node.js
 - Express.js
-- MongoDB
+- MongoDB Atlas
 - Mongoose
 - Multer
 
-### AI
+### AI Service
+
 - Python
 - Flask
-- Gunicorn
 - InsightFace
-- Face embeddings
-- Similarity matching
-
-### AWS / Cloud
-- Amazon EC2
-- Amazon S3
-- AWS IAM
-- Nginx
-- MongoDB Atlas
-
-## AWS Usage
-
-AWS is part of the actual application architecture, not only the deployment target.
-
-### EC2
-The application runs on an EC2 instance with:
-- Nginx
-- React production build
-- Node.js/Express API
-- Python AI service
-
-### S3
-Uploaded event photos are also stored in Amazon S3 using:
-
-```text
-events/<event-id>/<filename>
-```
-
-### IAM
-AWS IAM credentials are used by the backend for controlled S3 access.
+- OpenCV
+- NumPy
+- ONNX Runtime
+- Face embeddings and similarity matching
 
 ## Project Structure
 
 ```text
 ai-photo-finder/
 ├── client/
+│   └── src/
+│       ├── pages/
+│       │   ├── Home.jsx
+│       │   ├── CreateEvent.jsx
+│       │   ├── CreatorLogin.jsx
+│       │   ├── Event.jsx
+│       │   └── FindMe.jsx
+│       ├── App.jsx
+│       └── ...
 ├── server/
+│   ├── controllers/
+│   │   └── eventController.js
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   │   └── eventRoutes.js
+│   └── server.js
 ├── ai-service/
+│   ├── app.py
+│   ├── process_photos.py
+│   └── requirements.txt
 └── README.md
-```
-
-Important areas:
-
-```text
-client/src/pages/
-├── Home.jsx
-├── CreateEvent.jsx
-├── Event.jsx
-└── FindMe.jsx
-
-server/
-├── controllers/
-├── middleware/
-├── models/
-├── routes/
-└── server.js
-
-ai-service/
-├── app.py
-└── process_photos.py
 ```
 
 ## Local Setup
 
 ### Prerequisites
 
-- Node.js
+- Node.js and npm
 - Python 3.11+
-- MongoDB Atlas
-- AWS S3 bucket
+- MongoDB Atlas account or a MongoDB instance
 - Git
 
-### Clone
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Anwesha4/ai-photo-finder.git
 cd ai-photo-finder
 ```
 
-### Frontend
+### 2. Configure the backend
 
-```bash
-cd client
-npm install
-npm run dev
-```
-
-### Backend
+Install dependencies:
 
 ```bash
 cd server
 npm install
-npm start
 ```
 
-Create `server/.env` with your MongoDB and AWS credentials:
+Create a `server/.env` file containing the environment variables required by your backend. For example:
 
 ```env
 MONGO_URI=your_mongodb_connection_string
-AWS_REGION=your_aws_region
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_S3_BUCKET=your_s3_bucket_name
 PORT=5000
 ```
 
-### AI Service
+Use the exact variable names expected by your code. Do not commit this file.
+
+Start the backend using the script configured in `server/package.json`. If your project uses the `start` script:
+
+```bash
+npm start
+```
+
+### 3. Configure the AI service
+
+Open a separate terminal from the project root:
 
 ```bash
 cd ai-service
 python -m venv venv
 ```
 
-Activate the environment and install:
+On Windows, activate the virtual environment:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the Python service on port `8000`.
+Start the Flask application using its configured entry point. The AI service runs on port `8000` in the local development setup.
 
-## Security
+### 4. Configure the frontend
 
-Secrets must remain in environment variables and must never be committed to GitHub.
+Open another terminal:
 
-Do not commit:
-
-```text
-.env
-AWS access keys
-MongoDB credentials
-private deployment keys
+```bash
+cd client
+npm install
 ```
 
-## Problem
+Configure `client/.env.local` if your frontend uses environment variables, such as the URL used to generate event-sharing links.
 
-Large events can produce hundreds or thousands of photos. Attendees usually have to manually browse the entire gallery to find photos they appear in.
+For local network testing, use a reachable LAN address when sharing galleries with other devices on the same network. Do not hardcode machine-specific IP addresses into application source code.
 
-AI Photo Finder turns that into a simple workflow:
+Start the frontend:
 
-**Scan QR → Upload selfie → Get your photos.**
+```bash
+npm run dev
+```
+
+The Vite development server typically runs on port `5173`.
+
+### 5. Run the complete application
+
+Keep the three services running in separate terminals:
+
+| Service | Local port |
+|---|---:|
+| React + Vite frontend | 5173 |
+| Express backend | 5000 |
+| Flask AI service | 8000 |
+
+Ensure MongoDB is reachable and the backend can communicate with the AI service before testing face matching.
+
+## Creator Access and Event Management
+
+Event creators can return to an existing gallery through the **Creator Login** page using the event name and the existing four-digit event PIN.
+
+The PIN is also used to authorize destructive operations, such as deleting photos or an entire event.
+
+This is PIN-based access rather than a full user-account authentication system. Avoid reusing sensitive passwords as event PINs.
+
+## Security and Privacy
+
+- Keep database credentials and other secrets in environment variables.
+- Never commit `.env` files, API keys, or private credentials to GitHub.
+- Keep uploaded photos and face embeddings protected from unauthorized access.
+- Use appropriate access controls before deploying the application publicly.
+- Provide a clear photo retention and deletion policy when using the platform for real events.
+
+## Problem Statement
+
+Large events can generate hundreds or thousands of photos. Finding an individual picture in a shared gallery often requires manually browsing the entire collection.
+
+AI Photo Finder simplifies the process with an AI-powered workflow:
+
+**Scan QR code → Upload selfie → Find your photos.**
 
 ## Future Improvements
 
-- Authentication and event ownership
-- Automatic photo expiration and stronger privacy controls
-- Background processing for large uploads
-- Multiple AI workers and queue-based processing
-- CDN-based image delivery
-- Pagination and lazy loading
-- Event analytics
-- HTTPS and a custom domain
-
-## Hackathon
-
-Built as a hackathon project for the **WeMakeDevs Bharat Builds Tour / First Commit**.
+- Dedicated creator accounts and stronger authentication
+- Improved privacy controls and automatic photo expiration
+- Background processing for large photo uploads
+- Queue-based processing and multiple AI workers
+- Scalable cloud storage and CDN-based image delivery
+- Pagination and lazy loading for large galleries
+- Event analytics and gallery management tools
+- HTTPS and a custom domain for production deployment
 
 ## License
 
-Created for educational and hackathon purposes.
+No open-source license has been specified yet. All rights are reserved by default unless a license is added to the repository.
