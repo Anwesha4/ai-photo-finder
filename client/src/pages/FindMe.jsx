@@ -170,20 +170,32 @@ const FindMe = () => {
                     className="w-full h-auto object-contain"
                   />
 
-                  <div className="p-4 flex justify-between items-center">
+
+                  <div className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-gray-400">
                       Matching photo
                     </p>
 
-                    <a
-                      href={photo.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-semibold"
-                    >
-                      View Photo
-                    </a>
+                    <div className="flex gap-3">
+                      <a
+                        href={photo.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-semibold"
+                      >
+                        View Photo
+                      </a>
+
+                      <a
+                        href={photo.url}
+                        download={photo.filename || "photo.jpg"}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-semibold"
+                      >
+                        Download
+                      </a>
+                    </div>
                   </div>
+
                 </div>
               ))}
 

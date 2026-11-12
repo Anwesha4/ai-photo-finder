@@ -419,3 +419,110 @@ export const deletePhoto = async (req, res) => {
     });
   }
 };
+
+
+export const creatorLogin = async (req, res) => {
+  try {
+    const { name, deletePin } = req.body;
+
+    if (!name?.trim() || !/^\d{4}$/.test(deletePin || "")) {
+      return res.status(400).json({
+        message: "Event name and valid 4-digit PIN are required",
+      });
+    }
+
+    const event = await Event.findOne({
+      name: name.trim(),
+      deletePin,
+    }).select("_id name");
+
+    if (!event) {
+      return res.status(401).json({
+        message: "Invalid event name or delete PIN",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Creator login successful",
+      eventId: event._id,
+      eventName: event.name,
+    });
+  } catch (error) {
+    console.error("CREATOR LOGIN ERROR:", error);
+
+    return res.status(500).json({
+      message: "Creator login failed",
+    });
+  }
+};
+
+export const deleteEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deletePin } = req.body;
+
+    if (!/^\d{4}$/.test(deletePin || "")) {
+      return res.status(400).json({
+        message: "A valid 4-digit creator PIN is required",
+      });
+    }
+
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return res.status(404).json({
+        message: "Event not found",
+      });
+    }
+
+    if (event.deletePin !== deletePin) {
+      return res.status(403).json({
+        message: "Incorrect delete PIN",
+      });
+    }
+
+    // Remove locally stored photos on a best-effort basis.
+    for (const photo of event.photos) {
+      const filePath = path.resolve("uploads", photo.filename);
+
+      try {
+        await fs.promises.unlink(filePath);
+      } catch (fileError) {
+        if (fileError.code !== "ENOENT") {
+          console.error(
+            `Could not delete local file ${photo.filename}:`,
+            fileError.message
+          );
+        }
+      }
+
+      // Preserve cleanup of existing S3 copies.
+      try {
+        await s3.send(
+          new DeleteObjectCommand({
+            Bucket: S3_BUCKET,
+            Key: `events/${id}/${photo.filename}`,
+          })
+        );
+      } catch (s3Error) {
+        console.error(
+          `S3 cleanup failed for ${photo.filename}:`,
+          s3Error.message
+        );
+      }
+    }
+
+    await Event.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      message: "Event deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE EVENT ERROR:", error);
+
+    return res.status(500).json({
+      message: "Failed to delete event",
+    });
+  }
+};
+
